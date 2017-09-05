@@ -6,6 +6,13 @@ var lastRows = [];
 
 var LAST_COLUMN_IN_MENU = 'J';
 var LAST_ROW_IN_MENU = 3;
+ var START_ROW_OPTIONS = 2;
+var START_ROW_MENU = 3;
+
+var OPTIONS_COLUMNS = ['A', 'B', 'C', 'D', 'E'];
+var MENU_COLUMNS = ['B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+var MENU_ITEMS = 5;
 
 var OPTIONS = {
     'Breakfast': 'A:A',
@@ -56,43 +63,43 @@ function getLastRowsFromMenu() {
         lastRowCell.setValue(lastRowValue);
         lastRowNumber++;
     }
+    randomize();
     setDailyMealFormula();
+}
 
+function randomize() {
+    var currentCell, menu_row, lastRowInColumn;
+    var generator = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Generator");
+
+    for (var i = 0; i < MENU_COLUMNS.length; i++) {
+        var menu_column = MENU_COLUMNS[i]; //B
+        for (var j = 0; j < OPTIONS_COLUMNS.length; j++) {
+            lastRowInColumn = lastRows[j] - 1;
+            menu_row = START_ROW_MENU + j;
+            currentCell = generator.getRange(menu_column + menu_row);
+            currentCell.setFormula("=RANDBETWEEN(K3*" + START_ROW_OPTIONS + ";" + lastRowInColumn + ")");
+        }
+    }
 }
 
 function setDailyMealFormula() {
-    var START_ROW_OPTIONS = 2;
-    var START_ROW_MENU = 3;
-
-    var OPTIONS_COLUMNS = ['A', 'B', 'C', 'D', 'E'];
-    var MENU_COLUMNS = ['B', 'C', 'D', 'E', 'F', 'G', 'H'];
-
-    var MENU_ITEMS = 5;
     var menu_entries = START_ROW_MENU + MENU_ITEMS - 1;
-
-    var currentCell;
+    var currentCell, menu_row, lastRowInColumn, option_column, menu_column, menuRange;
 
     menuSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Menu");
-    var generator = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Generator");
 
-    //TODO: Refactor generator
-    // Refcator daily meals to call after generator
     for (var i = 0; i < MENU_COLUMNS.length; i++) {
-        var menu_column = MENU_COLUMNS[i]; //B
+        menu_column = MENU_COLUMNS[i]; //B
 
         for (var j = 0; j < OPTIONS_COLUMNS.length; j++) {
-            var option_column = OPTIONS_COLUMNS[j];
+            option_column = OPTIONS_COLUMNS[j];
             // minus headers to offset rows
-            var lastRowInColumn = lastRows[j] - 1;
-            var menu_row = START_ROW_MENU + Math.abs(j);
+            lastRowInColumn = lastRows[j] - 1;
+            menu_row = START_ROW_MENU + j;
+            menuRange = menu_column + menu_row;
 
-            currentCell = generator.getRange(menu_column + menu_row);
-            currentCell.setFormula("=RANDBETWEEN(K3*" + START_ROW_OPTIONS + ";" + lastRowInColumn + ")");
-            var randomize = currentCell.getValue();
-
-            currentCell = menuSheet.getRange(menu_column + menu_row);
-            currentCell.setFormula("=INDEX(Opciones!$" + option_column + "$" + START_ROW_OPTIONS + ":$" + option_column + "$" + lastRowInColumn + ";" + randomize + ")");
-            // currentCell.setFormula("=INDEX(Opciones!$" + option_column + "$" + START_ROW_OPTIONS + ":$" + option_column + "$" + lastRowInColumn + ";RANDBETWEEN(K3*" + START_ROW_OPTIONS + ";" + lastRowInColumn + "))");
+            currentCell = menuSheet.getRange(menuRange);
+            currentCell.setFormula("=INDEX(Opciones!$" + option_column + "$" + START_ROW_OPTIONS + ":$" + option_column + "$" + lastRowInColumn + ";Generator!$" + menuRange + ")");
         }
     }
 
